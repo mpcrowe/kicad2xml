@@ -115,7 +115,9 @@ public class KicadToXml
 //		out.writeCharacters("\t\t");
 
 		out.writeStartElement(id);
-				out.writeCharacters(st.nextToken());
+			String temp  = st.nextToken();
+			temp = stripChar(temp, "\"");
+				out.writeCharacters(temp);
 		out.writeEndElement();
 	}
 
@@ -227,10 +229,42 @@ public class KicadToXml
 		processAt(frag);
 		processLayer(frag);
 		processEffects(frag);
-
-
-		
 	}
+
+	public void processFpLine(String frag) throws XMLStreamException
+	{
+		out.writeCharacters("\r\n\t\t");
+			processDouble(frag, "start", "x", "y");
+			processDouble(frag, "end", "x", "y");
+			processSingle(frag, "layer");
+			processSingle(frag, "width");
+		out.writeCharacters("\r\n");
+	}
+
+	public void processFpCircle(String frag) throws XMLStreamException
+	{
+		out.writeCharacters("\r\n\t\t");
+			processDouble(frag, "center", "x", "y");
+			processDouble(frag, "end", "x", "y");
+			processSingle(frag, "layer");
+			processSingle(frag, "width");
+			processSingle(frag, "fill");
+		out.writeCharacters("\r\n");
+	}
+
+	
+	public void processFpArc(String frag) throws XMLStreamException
+	{
+		out.writeCharacters("\r\n\t\t");
+			processDouble(frag, "start", "x", "y");
+			processDouble(frag, "mid", "x", "y");
+			processDouble(frag, "end", "x", "y");
+			processSingle(frag, "layer");
+			processSingle(frag, "width");
+			processSingle(frag, "fill");
+		out.writeCharacters("\r\n");
+	}
+
 	
 	public int singleValueElement(String tline, int startIndex) throws XMLStreamException
 	{
@@ -330,12 +364,15 @@ public class KicadToXml
 				}
 				else if(line.startsWith("(fp_line"))
 				{
+					processFpLine(eleFrag);
 				}
 				else if(line.startsWith("(fp_circle"))
 				{
+					processFpCircle(eleFrag);
 				}
 				else if(line.startsWith("(fp_arc"))
 				{
+					processFpArc(eleFrag);
 				}
 				else if(line.startsWith("(fp_pad"))
 				{
@@ -357,7 +394,7 @@ public class KicadToXml
 
 		out.writeStartDocument();
 		out.writeCharacters("\r\n");
-		out.writeStartElement("mod");
+		out.writeStartElement("kicad_mod");
 		out.writeCharacters("\r\n");
 
 		BufferedReader reader = new BufferedReader(new FileReader(fname));
