@@ -36,14 +36,13 @@ import org.xml.sax.helpers.DefaultHandler;
 
 public class KicadToXml
 {
-	private boolean config = false;
-	private boolean bRunWhile = true;
-	static int numMessages = 3;
+//	private boolean config = false;
+//	private boolean bRunWhile = true;
+//	static int numMessages = 3;
 	static private int verbose = 0;
-	private int runCount = 0;
-	static long lastChunkTimestamp = 0;
-	static ArrayList<String> messageList = new ArrayList<String>();
-	private CoXmlHandler handler;
+//	private int runCount = 0;
+//	static long lastChunkTimestamp = 0;
+//	static ArrayList<String> messageList = new ArrayList<String>();
 	XMLStreamWriter out;
 	
 	public String lastRecieved;
@@ -266,6 +265,19 @@ public class KicadToXml
 	}
 
 	
+	public void processFpPad(String frag) throws XMLStreamException
+	{
+		out.writeCharacters("\r\n\t\t");
+			processDouble(frag, "at", "x", "y");
+			processDouble(frag, "size", "w", "h");
+			processDouble(frag, "end", "x", "y");
+			processSingle(frag, "layer");
+			processSingle(frag, "width");
+			processSingle(frag, "fill");
+		out.writeCharacters("\r\n");
+	}
+
+	
 	public int singleValueElement(String tline, int startIndex) throws XMLStreamException
 	{
 		int nstart = tline.indexOf("(", startIndex);
@@ -376,6 +388,7 @@ public class KicadToXml
 				}
 				else if(line.startsWith("(fp_pad"))
 				{
+					processFpPad(eleFrag);
 				}
 				out.writeCharacters("\t");
 				out.writeEndElement();
@@ -432,150 +445,7 @@ public class KicadToXml
 		out.writeEndDocument();
 		out.writeCharacters("\r\n");
 		out.close();		
-
-/*		SAXParserFactory saxParserFactory = SAXParserFactory.newInstance();
-		SAXParser saxParser = saxParserFactory.newSAXParser();
-		File fXmlFile = new File(fname);
-		handler = new CoXmlHandler();
-		saxParser.parse(fXmlFile, handler);
-		if(verbose>0)
-		{
-			System.out.println("\nclientEndpoint: \t"+ handler.clientEndpoint);
-			System.out.println("\npublishEndpoint:\t" + handler.publishEndpoint);
-			System.out.println("clientID:       \t"+ handler.clientID);
-			System.out.println("certificateFile: \t"+ handler.certificateFile);
-			System.out.println("privateKeyFile: \t"+ handler.privateKeyFile);
-			System.out.println("messagesPerPack: \t"+ handler.messagesPerPack);
-			System.out.println("verbose set to: \t"+ verbose);
-			System.out.println("runTimeSecs set to: \t"+ handler.runTimeSecs);
-			System.out.println("userId set to:  \t"+ handler.userId);
-			System.out.println("topicName:      \t"+handler.tonalTopicName);
-			System.out.println("publishTopicName: \t"+handler.publishTopicName);
-			System.out.println("lockFileLocation:      \t"+handler.lockFileLocation);
-			System.out.println("[Neural Net Created] \tNumNodes: " + handler.numNodes + " NumTestCases: " + handler.numTestCases +
-					" NumInputs:" + handler.numInputs);
-			System.out.println("qos             \t"+ handler.qos);
-			System.out.println("");
-		}
-		numMessages = handler.messagesPerPack;
-		config = true;
-*/
 	}
-
-
-	private class CoXmlHandler extends DefaultHandler
-	{
-		public String currConfigString;
-		public String clientEndpoint;
-		public String publishEndpoint;
-		public String clientID;
-		public String certificateFile;
-		public String nnSavedInstancePathName;
-		public String privateKeyFile;
-		public String tonalTopicName;
-		public String publishTopicName;
-		public String lockFileLocation = "/var/lock";
-		public int numNodes;
-		public int numTestCases;
-		public int numInputs;
-		public String userId;
-		public int messagesPerPack;
-		public int runTimeSecs = -1;
-		public int qos = 2;
-
-
-		@Override
-		public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException
-		{
-			if(qName.equalsIgnoreCase("hostName")) {
-				return;
-			}
-			currConfigString = new String();
-		}
-
-
-		@Override
-		public void endElement(String uri, String localName, String qName) throws SAXException
-		{
-			if(verbose>1)
-				System.out.println("currConfigString: ("+currConfigString+")");
-			if (qName.equalsIgnoreCase("clientEndpoint")) {
-				clientEndpoint = currConfigString;
-			}
-			if(qName.equalsIgnoreCase("publishEndpoint")) {
-				publishEndpoint = currConfigString;
-			}
-			else if(qName.equalsIgnoreCase("certificateFile")) {
-				certificateFile = currConfigString;
-			}
-			else if(qName.equalsIgnoreCase("privateKeyFile")) {
-				privateKeyFile = currConfigString;
-			}
-			else if(qName.equalsIgnoreCase("hostName")) {
-				currConfigString += getHostname();
-			}
-
-			else if(qName.equalsIgnoreCase("numTestCases")) {
-				numTestCases = Integer.parseInt(currConfigString);
-			}
-			else if(qName.equalsIgnoreCase("numInputs")) {
-				numInputs = Integer.parseInt(currConfigString);
-			}
-			else if(qName.equalsIgnoreCase("pathName")) {
-				nnSavedInstancePathName = currConfigString;
-			}
-			else if(qName.equalsIgnoreCase("lockFileLocation")) {
-				lockFileLocation = currConfigString;
-			}
-			else if(qName.equalsIgnoreCase("userId")) {
-				userId = currConfigString;
-			}
-			else if(qName.equalsIgnoreCase("messagesPerPack")) {
-				messagesPerPack = Integer.parseInt(currConfigString);
-			}
-			else if(qName.equalsIgnoreCase("verbose")) {
-				verbose = Integer.parseInt(currConfigString);
-			}
-			else if(qName.equalsIgnoreCase("runTimeSecs")) {
-				runTimeSecs = Integer.parseInt(currConfigString);
-			}
-			else if(qName.equalsIgnoreCase("config")) {
-			}
-			else
-			{
-			}
-		}
-
-
-		@Override
-		public void characters(char ch[], int start, int length) throws SAXException
-		{
-			currConfigString += new String(ch, start, length).trim();
-			if(currConfigString.length() == 0)
-				return;
-		}
-
-		public String getHostname()
-		{
-			InetAddress ip;
-			String hostname;
-			try
-			{
-				ip = InetAddress.getLocalHost();
-				hostname = ip.getHostName();
-				return(hostname);
-
-			}
-			catch (UnknownHostException e)
-			{
-				e.printStackTrace();
-			}
-			return("unknown");
-
-		}
-
-	}
-
 
 	public static void main (String[] args)
 	{
