@@ -71,17 +71,19 @@ public class KicadToXml
 			return;
 		int eindex = frag.indexOf(")", index+1);
 		frag = frag.substring(index+1, eindex).trim();
-		System.out.println("AT frag <"+frag+">");
+//		System.out.println("AT frag <"+frag+">");
 		StringTokenizer st = new StringTokenizer(frag, " ");
 		out.writeCharacters("\t\t");
 
 		out.writeStartElement("at");
-			out.writeStartElement("x");
-				out.writeCharacters(st.nextToken());
-			out.writeEndElement();
-			out.writeStartElement("y");
-				out.writeCharacters(st.nextToken());
-			out.writeEndElement();
+//			out.writeStartElement("x");
+//				out.writeCharacters(st.nextToken());
+//			out.writeEndElement();
+//			out.writeStartElement("y");
+//				out.writeCharacters(st.nextToken());
+//			out.writeEndElement();
+			out.writeAttribute("x", st.nextToken());
+			out.writeAttribute("y", st.nextToken());
 			while(st.hasMoreTokens())
 			{
 				out.writeEmptyElement(st.nextToken());
@@ -101,15 +103,12 @@ public class KicadToXml
 			return;
 		int eindex = frag.indexOf(")", index+1);
 		frag = frag.substring(index+1, eindex).trim();
-//		System.out.println("AT frag <"+frag+">");
 		StringTokenizer st = new StringTokenizer(frag, " ");
-//		out.writeCharacters("\t\t");
 
-		out.writeStartElement(id);
-			String temp  = st.nextToken();
-			temp = stripChar(temp, "\"");
-				out.writeCharacters(temp);
-		out.writeEndElement();
+		out.writeEmptyElement(id);
+			String temp  = stripChar(st.nextToken(), "\"");
+			out.writeAttribute("val", temp);
+//		out.writeEndElement();
 	}
 
 
@@ -123,22 +122,26 @@ public class KicadToXml
 			return;
 		int eindex = frag.indexOf(")", index+1);
 		frag = frag.substring(index+1, eindex).trim();
-//		System.out.println("AT frag <"+frag+">");
-		StringTokenizer st = new StringTokenizer(frag, " ");
-//		out.writeCharacters("\t\t");
 
-		out.writeStartElement(id);
-			out.writeStartElement(first);
-				out.writeCharacters(st.nextToken());
+		StringTokenizer st = new StringTokenizer(frag, " ");
+		int count = st.countTokens();
+		if(count >2)
+		{
+			out.writeStartElement(id);
+				out.writeAttribute(first, st.nextToken());
+				out.writeAttribute(second, st.nextToken());
+				while(st.hasMoreTokens())
+				{
+					out.writeEmptyElement(st.nextToken());
+				}
 			out.writeEndElement();
-			out.writeStartElement(second);
-				out.writeCharacters(st.nextToken());
-			out.writeEndElement();
-			while(st.hasMoreTokens())
-			{
-				out.writeEmptyElement(st.nextToken());
-			}
-		out.writeEndElement();
+		}
+		else
+		{
+			out.writeEmptyElement(id);
+				out.writeAttribute(first, st.nextToken());
+				out.writeAttribute(second, st.nextToken());
+		}
 	}
 
 
@@ -150,10 +153,8 @@ public class KicadToXml
 		index = frag.indexOf(" ", index+1);
 		if(index<0)
 			return;
-//		int eindex = frag.indexOf(")", index+1);
 		frag = frag.substring(index+1).trim();
-//		System.out.println("font frag <"+frag+">");
-//		out.writeCharacters("");
+
 		out.writeStartElement("font");
 		processDouble(frag, "size", "w", "h");
 		processSingle(frag, "thickness");
@@ -261,8 +262,16 @@ public class KicadToXml
 	}
 
 
-	public void processFpPad(String frag) throws XMLStreamException
+	public void processPad(String frag) throws XMLStreamException
 	{
+		StringTokenizer st = new StringTokenizer(frag, " ");
+		String temp  = stripChar(st.nextToken(), "\"");
+		out.writeAttribute("number",temp);
+		temp  = stripChar(st.nextToken(), "\"");
+		out.writeAttribute("type",temp);
+		temp  = stripChar(st.nextToken(), "\"");
+		out.writeAttribute("shape",temp);
+
 		out.writeCharacters("\r\n\t\t");
 			processDouble(frag, "at", "x", "y");
 			processDouble(frag, "size", "w", "h");
@@ -274,7 +283,7 @@ public class KicadToXml
 	}
 
 
-	public int singleValueElement(String tline, int startIndex) throws XMLStreamException
+	public int singleValueAttribute(String tline, int startIndex) throws XMLStreamException
 	{
 		int nstart = tline.indexOf("(", startIndex);
 		nstart++;
@@ -282,8 +291,8 @@ public class KicadToXml
 		String token = tline.substring(nstart, nend);
 		int spnum = token.indexOf(" ");
 		String name = token.substring(0, spnum);
-		out.writeCharacters("\t");
-		out.writeStartElement(name);
+//		out.writeCharacters("\t");
+//		out.writeStartElement(name);
 		String val = token.substring(spnum);
 		val = val.trim();
 		if(val.startsWith("\""))
@@ -292,9 +301,10 @@ public class KicadToXml
 			val = val.substring(0, val.indexOf("\""));
 		}
 		val = val.trim();
-		out.writeCharacters(val);
-		out.writeEndElement();
-		out.writeCharacters("\r\n");
+//		out.writeCharacters(val);
+//		out.writeEndElement();
+//		out.writeCharacters("\r\n");
+		out.writeAttribute(name, val);
 		return(nend);
 	}
 
@@ -312,7 +322,7 @@ public class KicadToXml
 	}
 
 
-	public int count(String str, int ch)
+	private int count(String str, int ch)
 	{
 		int retval = 0;
 		int loc = str.indexOf(ch);
@@ -338,10 +348,11 @@ public class KicadToXml
 //				return;
 			if( line.startsWith("(layer") || line.startsWith("(tags") || line.startsWith("(attr") )
 			{
-				singleValueElement(line, 0);
+				singleValueAttribute(line, 0);
 			}
 			else
 			{
+				out.writeCharacters("\r\n");
 				// concatinate lines to get a an element with matching '('')'
 				int open = count(line, '(');
 				int close = count(line, ')');
@@ -385,13 +396,13 @@ public class KicadToXml
 				{
 					processFpArc(eleFrag);
 				}
-				else if(line.startsWith("(fp_pad"))
+				else if(line.startsWith("(pad"))
 				{
-					processFpPad(eleFrag);
+					processPad(eleFrag);
 				}
 				out.writeCharacters("\t");
 				out.writeEndElement();
-				out.writeCharacters("\r\n");
+//				out.writeCharacters("\r\n");
 			}
 		}
 	}
@@ -401,6 +412,8 @@ public class KicadToXml
 	{
 		System.out.println(this.getClass().getName()+" Reading config from "+fname);
 
+		try
+		{
 		OutputStream outputStream = new FileOutputStream(new File("out.xml"));
 
 		out = XMLOutputFactory.newInstance().createXMLStreamWriter(new OutputStreamWriter(outputStream, "utf-8"));
@@ -423,16 +436,11 @@ public class KicadToXml
 				nstart++;
 				int nend = tline.indexOf("\"", nstart);
 				String name = tline.substring(nstart, nend);
-				out.writeCharacters("\r\n\t");
-				out.writeStartElement("name");
-				out.writeCharacters(name.trim());
-				out.writeEndElement();
-				out.writeCharacters("\r\n");
-
-				nend = singleValueElement(tline, nend);
+				out.writeAttribute("name", name.trim());
+				nend = singleValueAttribute(tline, nend);
 				nend++;
 				tline = tline.substring(nend);
-				singleValueElement(tline, 0);
+				singleValueAttribute(tline, 0);
 				parseSexpression(reader);
 				out.writeEndElement();
 				out.writeCharacters("\r\n");
@@ -444,8 +452,13 @@ public class KicadToXml
 		out.writeCharacters("\r\n");
 		out.writeEndDocument();
 		out.writeCharacters("\r\n");
-		out.close();
+		}
+		finally
+		{
+			out.close();
+		}
 	}
+
 
 	public static void main (String[] args)
 	{
