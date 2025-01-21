@@ -6,5 +6,6 @@ comple with<br/>
 `javac KicadToXml.java`<br/>
 run with <br/>
 `java KicadToXml test/MOD18_MAX-M10M_UBL.kicad_mod`<br/>
-it will generate an out.xml file
+it will generate an out.xml file  that can be used by an xslt markup to
+generate a gEDA PCB footprint.
  
