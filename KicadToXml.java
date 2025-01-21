@@ -36,17 +36,8 @@ import org.xml.sax.helpers.DefaultHandler;
 
 public class KicadToXml
 {
-//	private boolean config = false;
-//	private boolean bRunWhile = true;
-//	static int numMessages = 3;
 	static private int verbose = 0;
-//	private int runCount = 0;
-//	static long lastChunkTimestamp = 0;
-//	static ArrayList<String> messageList = new ArrayList<String>();
 	XMLStreamWriter out;
-	
-	public String lastRecieved;
-
 	public String fname;
 
 	public KicadToXml(String[] args)
@@ -54,7 +45,8 @@ public class KicadToXml
 		fname = args[0];
 	}
 
-	public String stripChar(String str, String ch)
+
+	private String stripChar(String str, String ch)
 	{
 		if( str.indexOf(ch) <0)
 			return(str);
@@ -68,6 +60,7 @@ public class KicadToXml
 		return(sb.toString());
 	}
 
+
 	public void processAt(String frag) throws XMLStreamException
 	{
 		int index = frag.indexOf("(at");
@@ -76,7 +69,7 @@ public class KicadToXml
 		index = frag.indexOf(" ", index+1);
 		if(index<0)
 			return;
-		int eindex = frag.indexOf(")", index+1); 
+		int eindex = frag.indexOf(")", index+1);
 		frag = frag.substring(index+1, eindex).trim();
 		System.out.println("AT frag <"+frag+">");
 		StringTokenizer st = new StringTokenizer(frag, " ");
@@ -95,9 +88,8 @@ public class KicadToXml
 			}
 		out.writeEndElement();
 		out.writeCharacters("\r\n");
-		
-		
 	}
+
 
 	public void processSingle(String frag, String id) throws XMLStreamException
 	{
@@ -107,7 +99,7 @@ public class KicadToXml
 		index = frag.indexOf(" ", index+1);
 		if(index<0)
 			return;
-		int eindex = frag.indexOf(")", index+1); 
+		int eindex = frag.indexOf(")", index+1);
 		frag = frag.substring(index+1, eindex).trim();
 //		System.out.println("AT frag <"+frag+">");
 		StringTokenizer st = new StringTokenizer(frag, " ");
@@ -129,7 +121,7 @@ public class KicadToXml
 		index = frag.indexOf(" ", index+1);
 		if(index<0)
 			return;
-		int eindex = frag.indexOf(")", index+1); 
+		int eindex = frag.indexOf(")", index+1);
 		frag = frag.substring(index+1, eindex).trim();
 //		System.out.println("AT frag <"+frag+">");
 		StringTokenizer st = new StringTokenizer(frag, " ");
@@ -148,7 +140,8 @@ public class KicadToXml
 			}
 		out.writeEndElement();
 	}
-	
+
+
 	public void processFont(String frag) throws XMLStreamException
 	{
 		int index = frag.indexOf("(font");
@@ -157,18 +150,18 @@ public class KicadToXml
 		index = frag.indexOf(" ", index+1);
 		if(index<0)
 			return;
-//		int eindex = frag.indexOf(")", index+1); 
+//		int eindex = frag.indexOf(")", index+1);
 		frag = frag.substring(index+1).trim();
-		System.out.println("font frag <"+frag+">");
+//		System.out.println("font frag <"+frag+">");
 //		out.writeCharacters("");
 		out.writeStartElement("font");
 		processDouble(frag, "size", "w", "h");
 		processSingle(frag, "thickness");
 		out.writeEndElement();
 		out.writeCharacters("\r\n");
-	
 	}
-	
+
+
 	public void processEffects(String frag) throws XMLStreamException
 	{
 		int index = frag.indexOf("(effects");
@@ -177,9 +170,9 @@ public class KicadToXml
 		index = frag.indexOf(" ", index+1);
 		if(index<0)
 			return;
-//		int eindex = frag.indexOf(")", index+1); 
+//		int eindex = frag.indexOf(")", index+1);
 		frag = frag.substring(index+1).trim();
-		System.out.println("effects frag <"+frag+">");
+//		System.out.println("effects frag <"+frag+">");
 		out.writeCharacters("\t\t");
 		out.writeStartElement("effects");
 			processFont(frag);
@@ -197,18 +190,19 @@ public class KicadToXml
 		index = frag.indexOf(" ", index+1);
 		if(index<0)
 			return;
-		int eindex = frag.indexOf(")", index+1); 
+		int eindex = frag.indexOf(")", index+1);
 		frag = frag.substring(index+1, eindex).trim();
-		System.out.println("Layer frag <"+frag+">");
+//		System.out.println("Layer frag <"+frag+">");
 		frag = stripChar(frag, "\"");
-		System.out.println("strip frag <"+frag+">");
+//		System.out.println("strip frag <"+frag+">");
 		out.writeCharacters("\t\t");
 		out.writeStartElement("layer");
 		out.writeCharacters(stripChar(frag, "\""));
 		out.writeEndElement();
 		out.writeCharacters("\r\n");
 	}
-	
+
+
 	public void processFpText(String frag) throws XMLStreamException
 	{
 		int ename = frag.indexOf(" ");
@@ -223,12 +217,13 @@ public class KicadToXml
 		out.writeCharacters(val);
 		out.writeEndElement();
 		out.writeCharacters("\r\n");
-		
+
 		frag = frag.substring(ename).trim();
 		processAt(frag);
 		processLayer(frag);
 		processEffects(frag);
 	}
+
 
 	public void processFpLine(String frag) throws XMLStreamException
 	{
@@ -239,6 +234,7 @@ public class KicadToXml
 			processSingle(frag, "width");
 		out.writeCharacters("\r\n");
 	}
+
 
 	public void processFpCircle(String frag) throws XMLStreamException
 	{
@@ -251,7 +247,7 @@ public class KicadToXml
 		out.writeCharacters("\r\n");
 	}
 
-	
+
 	public void processFpArc(String frag) throws XMLStreamException
 	{
 		out.writeCharacters("\r\n\t\t");
@@ -264,7 +260,7 @@ public class KicadToXml
 		out.writeCharacters("\r\n");
 	}
 
-	
+
 	public void processFpPad(String frag) throws XMLStreamException
 	{
 		out.writeCharacters("\r\n\t\t");
@@ -277,7 +273,7 @@ public class KicadToXml
 		out.writeCharacters("\r\n");
 	}
 
-	
+
 	public int singleValueElement(String tline, int startIndex) throws XMLStreamException
 	{
 		int nstart = tline.indexOf("(", startIndex);
@@ -302,6 +298,7 @@ public class KicadToXml
 		return(nend);
 	}
 
+
 	public String elementName(String str)
 	{
 		str = str.trim();
@@ -312,8 +309,9 @@ public class KicadToXml
 		}
 		start++;
 		return(str.substring(start, str.indexOf(' ', start)).trim());
-	}	
-	
+	}
+
+
 	public int count(String str, int ch)
 	{
 		int retval = 0;
@@ -325,7 +323,8 @@ public class KicadToXml
 		}
 		return(retval);
 	}
-	
+
+
 	public void parseSexpression(BufferedReader reader) throws IOException, XMLStreamException
 	{
 //		int depth = 0
@@ -366,13 +365,13 @@ public class KicadToXml
 				out.writeCharacters("\t");
 				out.writeStartElement(elName);
 				String eleFrag = line.substring(line.indexOf(' ')).trim();
-				
+
 				System.out.println("<"+elName+"> frag:"+eleFrag+":");
 
 				if(line.startsWith("(fp_text"))
 				{
 					processFpText(eleFrag);
-					
+
 				}
 				else if(line.startsWith("(fp_line"))
 				{
@@ -396,11 +395,12 @@ public class KicadToXml
 			}
 		}
 	}
-	
+
+
 	public void parse() throws SAXException, ParserConfigurationException, IOException, XMLStreamException
 	{
 		System.out.println(this.getClass().getName()+" Reading config from "+fname);
- 
+
 		OutputStream outputStream = new FileOutputStream(new File("out.xml"));
 
 		out = XMLOutputFactory.newInstance().createXMLStreamWriter(new OutputStreamWriter(outputStream, "utf-8"));
@@ -428,7 +428,7 @@ public class KicadToXml
 				out.writeCharacters(name.trim());
 				out.writeEndElement();
 				out.writeCharacters("\r\n");
-				
+
 				nend = singleValueElement(tline, nend);
 				nend++;
 				tline = tline.substring(nend);
@@ -439,12 +439,12 @@ public class KicadToXml
 			}
 			line = reader.readLine();
 		}
-		
+
 		out.writeEndElement();
 		out.writeCharacters("\r\n");
 		out.writeEndDocument();
 		out.writeCharacters("\r\n");
-		out.close();		
+		out.close();
 	}
 
 	public static void main (String[] args)
@@ -466,8 +466,8 @@ public class KicadToXml
 		{
 //			System.out.println(Thread.currentThread().getStackTrace());
 			int size = cfe.getStackTrace().length - 1;
-			System.out.println("   Penultimate cause: method=" + cfe.getStackTrace()[size-1].getMethodName() + " class=" + cfe.getStackTrace()[size-1].getClassName() + 
-                    " line=" + cfe.getStackTrace()[0].getLineNumber()); 
+			System.out.println("   Penultimate cause: method=" + cfe.getStackTrace()[size-1].getMethodName() + " class=" + cfe.getStackTrace()[size-1].getClassName() +
+		    " line=" + cfe.getStackTrace()[0].getLineNumber());
 			System.err.println(cfe.getMessage());
 			System.exit(1);
 		}
