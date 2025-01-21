@@ -1,48 +1,31 @@
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.io.BufferedWriter;
-import java.io.FileNotFoundException;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Scanner;
-//import java.util.Set;
 import java.lang.StringBuilder;
 import java.util.StringTokenizer;
 
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
+import java.io.File;
+import java.io.IOException;
+
+import java.io.BufferedReader;
+import java.io.FileReader;
+
 import javax.xml.stream.*;
 import java.io.OutputStreamWriter;
 import java.io.OutputStream;
 import java.io.FileOutputStream;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-
-import org.xml.sax.Attributes;
-import org.xml.sax.SAXException;
-import org.xml.sax.helpers.DefaultHandler;
-
-
-
 public class KicadToXml
 {
-	static private int verbose = 0;
 	XMLStreamWriter out;
 	public String fname;
+	public String outFname;
 
 	public KicadToXml(String[] args)
 	{
 		fname = args[0];
+		if(args.length > 1)
+			outFname = args[1];
+		else
+			outFname = "out.xml";
 	}
 
 
@@ -71,17 +54,10 @@ public class KicadToXml
 			return;
 		int eindex = frag.indexOf(")", index+1);
 		frag = frag.substring(index+1, eindex).trim();
-//		System.out.println("AT frag <"+frag+">");
 		StringTokenizer st = new StringTokenizer(frag, " ");
 		out.writeCharacters("\t\t");
 
 		out.writeStartElement("at");
-//			out.writeStartElement("x");
-//				out.writeCharacters(st.nextToken());
-//			out.writeEndElement();
-//			out.writeStartElement("y");
-//				out.writeCharacters(st.nextToken());
-//			out.writeEndElement();
 			out.writeAttribute("x", st.nextToken());
 			out.writeAttribute("y", st.nextToken());
 			while(st.hasMoreTokens())
@@ -108,7 +84,6 @@ public class KicadToXml
 		out.writeEmptyElement(id);
 			String temp  = stripChar(st.nextToken(), "\"");
 			out.writeAttribute("val", temp);
-//		out.writeEndElement();
 	}
 
 
@@ -171,9 +146,7 @@ public class KicadToXml
 		index = frag.indexOf(" ", index+1);
 		if(index<0)
 			return;
-//		int eindex = frag.indexOf(")", index+1);
 		frag = frag.substring(index+1).trim();
-//		System.out.println("effects frag <"+frag+">");
 		out.writeCharacters("\t\t");
 		out.writeStartElement("effects");
 			processFont(frag);
@@ -193,15 +166,15 @@ public class KicadToXml
 			return;
 		int eindex = frag.indexOf(")", index+1);
 		frag = frag.substring(index+1, eindex).trim();
-//		System.out.println("Layer frag <"+frag+">");
 		frag = stripChar(frag, "\"");
-//		System.out.println("strip frag <"+frag+">");
+
 		out.writeCharacters("\t\t");
 		out.writeStartElement("layer");
 		out.writeCharacters(stripChar(frag, "\""));
 		out.writeEndElement();
 		out.writeCharacters("\r\n");
 	}
+
 
 	public void processLayers(String frag) throws XMLStreamException
 	{
@@ -213,9 +186,7 @@ public class KicadToXml
 			return;
 		int eindex = frag.indexOf(")", index+1);
 		frag = frag.substring(index+1, eindex).trim();
-//		System.out.println("Layer frag <"+frag+">");
 		frag = stripChar(frag, "\"");
-//		System.out.println("strip frag <"+frag+">");
 		out.writeCharacters("\r\n\t\t");
 		out.writeStartElement("layers");
 		StringTokenizer st = new StringTokenizer(frag, " ");
@@ -225,10 +196,7 @@ public class KicadToXml
 			out.writeEmptyElement("layer");
 			out.writeAttribute("val", temp);
 		}
-
-//		out.writeCharacters(stripChar(frag, "\""));
 		out.writeEndElement();
-//		out.writeCharacters("\r\n");
 	}
 
 
@@ -322,8 +290,6 @@ public class KicadToXml
 		String token = tline.substring(nstart, nend);
 		int spnum = token.indexOf(" ");
 		String name = token.substring(0, spnum);
-//		out.writeCharacters("\t");
-//		out.writeStartElement(name);
 		String val = token.substring(spnum);
 		val = val.trim();
 		if(val.startsWith("\""))
@@ -332,15 +298,12 @@ public class KicadToXml
 			val = val.substring(0, val.indexOf("\""));
 		}
 		val = val.trim();
-//		out.writeCharacters(val);
-//		out.writeEndElement();
-//		out.writeCharacters("\r\n");
 		out.writeAttribute(name, val);
 		return(nend);
 	}
 
 
-	public String elementName(String str)
+	private String elementName(String str)
 	{
 		str = str.trim();
 		int start = str.indexOf('(');
@@ -368,15 +331,12 @@ public class KicadToXml
 
 	public void parseSexpression(BufferedReader reader) throws IOException, XMLStreamException
 	{
-//		int depth = 0
 		while(true)
 		{
 			String line = reader.readLine();
 			if(line == null)
 				return;
 			line = line.trim();
-//			if( line.startsWith(")" && (depth == 0))
-//				return;
 			if( line.startsWith("(layer") || line.startsWith("(tags") || line.startsWith("(attr") )
 			{
 				singleValueAttribute(line, 0);
@@ -401,12 +361,9 @@ public class KicadToXml
 				String elName = elementName(line);
 				if(elName == null)
 					break;
-//				System.out.println("<"+elName+">");
 				out.writeCharacters("\t");
 				out.writeStartElement(elName);
 				String eleFrag = line.substring(line.indexOf(' ')).trim();
-
-//				System.out.println("<"+elName+"> frag:"+eleFrag+":");
 
 				if(line.startsWith("(fp_text"))
 				{
@@ -431,19 +388,18 @@ public class KicadToXml
 				}
 				out.writeCharacters("\t");
 				out.writeEndElement();
-//				out.writeCharacters("\r\n");
 			}
 		}
 	}
 
 
-	public void parse() throws SAXException, ParserConfigurationException, IOException, XMLStreamException
+	public void parse() throws IOException, XMLStreamException
 	{
-		System.out.println(this.getClass().getName()+" Parsing: "+fname);
+		System.out.println(this.getClass().getName()+" Parsing: "+fname+" to: "+outFname);
 
 		try
 		{
-		OutputStream outputStream = new FileOutputStream(new File("out.xml"));
+		OutputStream outputStream = new FileOutputStream(new File(outFname));
 
 		out = XMLOutputFactory.newInstance().createXMLStreamWriter(new OutputStreamWriter(outputStream, "utf-8"));
 
@@ -456,7 +412,6 @@ public class KicadToXml
 		String line = reader.readLine();
 		while( line != null)
 		{
-//			System.out.println(line);
 			String tline = line.trim();
 			if(tline.startsWith("(footprint"))
 			{
@@ -495,7 +450,8 @@ public class KicadToXml
 		{
 			if(args.length<1)
 			{
-				System.out.println("Usage: java KicadToXml pathname");
+				System.out.println("This utility converts a Kicad footprint to an xml document that can be parsed with xslt tools");
+				System.out.println("Usage: java KicadToXml pathname/source [path/dest]");
 				System.exit(-1);
 			}
 			KicadToXml a1 = new KicadToXml(args);
@@ -503,10 +459,7 @@ public class KicadToXml
 		}
 		catch (Exception cfe)
 		{
-//			System.out.println(Thread.currentThread().getStackTrace());
-			int size = cfe.getStackTrace().length - 1;
-			System.out.println("   Penultimate cause: method=" + cfe.getStackTrace()[size-1].getMethodName() + " class=" + cfe.getStackTrace()[size-1].getClassName() +
-		    " line=" + cfe.getStackTrace()[0].getLineNumber());
+			cfe.printStackTrace();
 			System.err.println(cfe.getMessage());
 			System.exit(1);
 		}
