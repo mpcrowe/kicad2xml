@@ -205,7 +205,8 @@ public class KicadToXml
 		int ename = frag.indexOf(" ");
 		out.writeCharacters("\r\n\t\t");
 		String elName = frag.substring(0, ename).trim();
-		out.writeStartElement(elName);
+		out.writeStartElement("text");
+		out.writeAttribute("name", elName);
 
 		frag = frag.substring(ename).trim();
 		ename = frag.indexOf(" ", 1);
