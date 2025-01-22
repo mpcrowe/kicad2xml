@@ -1,53 +1,63 @@
-<xsl:stylesheet
-   version="1.0"
-   xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-   xmlns="http://www.w3.org/2000/svg"
+<xsl:stylesheet version="1.0"
+	xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+	xmlns="http://www.w3.org/2000/svg"
 >
-  <xsl:output indent="yes" cdata-section-elements="style" />
+	<xsl:output indent="yes" cdata-section-elements="style" />
 
-  <xsl:param name="width" select="40" /><!-- width of bars -->
-  <xsl:param name="space" select="10" /><!-- space between bars and items -->
+	<xsl:template match="kicad_mod">
+	<svg height="2000" width="3000">
+	<defs>
+		<style type="text/css"><![CDATA[g.bar text {
+		font-family: Arial;
+		text-anchor: middle;
+		fill: white;
+		}
+		g.bar rect {
+			fill: black;
+		}
+		]]></style>
+	</defs>
+		<xsl:element name="g">
+			<xsl:apply-templates select="footprint" />
+		</xsl:element>
+</svg>
+</xsl:template>
 
-  <xsl:variable name="max-y" select="//detail[not(//detail &gt; .)][1]" />
+	<xsl:template match="footprint">
+			<xsl:element name="g">
+				<xsl:attribute name="transform">translate(600,600)</xsl:attribute>
+			<xsl:apply-templates/>
+			</xsl:element>
+	</xsl:template>
 
-  <xsl:template match="root">
-    <svg>
-      <defs>
-	<style type="text/css"><![CDATA[
-	  g.bar text {
-	    font-family: Arial;
-	    text-anchor: middle;
-	    fill: white;
-	  }
-	  g.bar rect {
-	    fill: black;
-	  }
-	]]></style>
-      </defs>
-      <g transform="translate(10, 10)">
-	<xsl:apply-templates select="item" />
-      </g>
-    </svg>
-  </xsl:template>
+	<xsl:template match="fp_line">
+	<xsl:variable name="scale">100</xsl:variable>
 
-  <xsl:template match="item">
-    <xsl:variable name="prev-item" select="preceding-sibling::item" />
-    <g class="item" id="item-{position()}" transform="translate({
-      count($prev-item/detail) * ($width + $space)
-      + count($prev-item) * $space
-    })">
-      <xsl:apply-templates select="detail" />
-    </g>
-  </xsl:template>
-
-  <xsl:template match="detail">
-    <xsl:variable name="idx" select="count(preceding-sibling::detail)" />
-    <xsl:variable name="pos" select="$idx * ($width + $space)" />
-    <g class="bar">
-      <rect x="{$pos}" y="{$max-y - .}" height="{.}" width="{$width}" />
-      <text x="{$pos + $width div 2.0}" y="{$max-y - $space}">
-	<xsl:value-of select="."/>
-      </text>
-    </g>
-  </xsl:template>
+		<xsl:element name="path">
+		<xsl:attribute name="d">M<xsl:value-of select="./start/@x *
+$scale"/><xsl:text> </xsl:text><xsl:value-of 
+select="0 + (./start/@y *$scale )"/> L<xsl:value-of 
+select="./end/@x * $scale "/><xsl:text> </xsl:text> <xsl:value-of 
+select="0 + (./end/@y *$scale )"/> </xsl:attribute>
+		<xsl:choose>
+			<xsl:when test="./layer/@val = 'F.CrtYd'">
+				<xsl:attribute name="style">stroke:magenta; stroke-width:<xsl:value-of
+select="round((./width/@val)*$scale + 0.5)"/>; fill:magenta</xsl:attribute>
+			</xsl:when>
+			<xsl:when test="./layer/@val = 'F.SilkS'">
+				<xsl:attribute name="style">stroke:lightyellow; stroke-width:<xsl:value-of
+select="round((./width/@val)*$scale + 0.5)"/>; fill:lightyellow</xsl:attribute>
+			</xsl:when>
+			<xsl:when test="./layer/@val = 'F.Fab'">
+				<xsl:attribute name="style">stroke:lightseagreen; stroke-width:<xsl:value-of
+select="round((./width/@val)*$scale +0.5)"/>; fill:lightseagreen</xsl:attribute>
+			</xsl:when>
+			<xsl:otherwise>
+				<xsl:attribute name="style">stroke:black; stroke-width:<xsl:value-of
+select="round((./width/@val)*$scale +0.5)"/>; fill:black</xsl:attribute>
+			</xsl:otherwise>
+		</xsl:choose>
+		</xsl:element>
+	</xsl:template>
+	<xsl:template match="*"/>
 </xsl:stylesheet>
