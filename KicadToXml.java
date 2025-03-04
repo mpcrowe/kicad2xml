@@ -44,7 +44,7 @@ public class KicadToXml
 	}
 
 
-	public void processAt(String frag) throws XMLStreamException
+/*	public void processAt(String frag) throws XMLStreamException
 	{
 		int index = frag.indexOf("(at");
 		if( index<0 )
@@ -60,6 +60,11 @@ public class KicadToXml
 		out.writeStartElement("at");
 			out.writeAttribute("x", st.nextToken());
 			out.writeAttribute("y", st.nextToken());
+			if(st.hasMoreTokens())
+			{
+				String temp = st.nextToken();
+				out.writeAttribute("rot", temp);
+			}
 			while(st.hasMoreTokens())
 			{
 				out.writeEmptyElement(st.nextToken());
@@ -67,7 +72,7 @@ public class KicadToXml
 		out.writeEndElement();
 		out.writeCharacters("\r\n");
 	}
-
+*/
 
 	public void processSingle(String frag, String id) throws XMLStreamException
 	{
@@ -105,6 +110,42 @@ public class KicadToXml
 			out.writeStartElement(id);
 				out.writeAttribute(first, st.nextToken());
 				out.writeAttribute(second, st.nextToken());
+				while(st.hasMoreTokens())
+				{
+					out.writeEmptyElement(st.nextToken());
+				}
+			out.writeEndElement();
+		}
+		else
+		{
+			out.writeEmptyElement(id);
+				out.writeAttribute(first, st.nextToken());
+				out.writeAttribute(second, st.nextToken());
+		}
+	}
+
+	public void processDoubleOpt(String frag, String id, String first, String second, String third) throws XMLStreamException
+	{
+		int index = frag.indexOf("("+id);
+		if( index<0 )
+			return;
+		index = frag.indexOf(" ", index+1);
+		if(index<0)
+			return;
+		int eindex = frag.indexOf(")", index+1);
+		frag = frag.substring(index+1, eindex).trim();
+
+		StringTokenizer st = new StringTokenizer(frag, " ");
+		int count = st.countTokens();
+		if(count >2)
+		{
+			out.writeStartElement(id);
+				out.writeAttribute(first, st.nextToken());
+				out.writeAttribute(second, st.nextToken());
+				if(st.hasMoreTokens())
+				{
+					out.writeAttribute(third, st.nextToken());
+				}
 				while(st.hasMoreTokens())
 				{
 					out.writeEmptyElement(st.nextToken());
@@ -216,7 +257,8 @@ public class KicadToXml
 		out.writeCharacters("\r\n");
 
 		frag = frag.substring(ename).trim();
-		processAt(frag);
+//		processAt(frag);
+		processDoubleOpt(frag, "at", "x", "y", "flag");
 		processLayer(frag);
 		processEffects(frag);
 	}
@@ -269,7 +311,7 @@ public class KicadToXml
 		out.writeAttribute("shape",temp);
 
 		out.writeCharacters("\r\n\t\t");
-			processDouble(frag, "at", "x", "y");
+			processDoubleOpt(frag, "at", "x", "y", "rot");
 			processDouble(frag, "size", "w", "h");
 			processDouble(frag, "end", "x", "y");
 			processSingle(frag, "drill");
